@@ -13,9 +13,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class StoreDataLambda implements RequestStreamHandler {
 
-    private static final String DB_URL = "jdbc:postgresql://your-db-url:5432/your-db-name";
-    private static final String DB_USERNAME = "your-db-username";
-    private static final String DB_PASSWORD = "your-db-password";
+    private static final String DB_URL = "jdbc:postgresql:blog-post-db.cb61nkakvvkt.us-east-2.rds.amazonaws.com";
+    private static final String DB_USERNAME = "postgres";
+    private static final String DB_PASSWORD = "dfFVbYII5xeBzgEQ94sd";
 
     @Override
     public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
