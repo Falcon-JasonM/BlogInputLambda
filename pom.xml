@@ -17,7 +17,7 @@
   <aws.lambda.java.version>provided</aws.lambda.java.version>
   <aws.java.sdk.version>1.2.3</aws.java.sdk.version>
   <jackson.version>2.13.4.1</jackson.version>
-  <postgresql.version>42.2.23</postgresql.version>
+  <postgresql.version>42.2.7</postgresql.version>
 </properties>
 
 <dependencies>
