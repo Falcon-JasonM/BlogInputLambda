@@ -3,11 +3,10 @@ Transform: AWS::Serverless-2016-10-31
 Description: Handler for blog post input
 
 Resources:
-
   HelloWorldLambda:
     Type: AWS::Serverless::Function
     Properties:
       Runtime: java17
       MemorySize: 512
       Handler: handlers.StoreDataLambda::handleRequest
-      CodeUri: target/handler-for-blog-post-input.jar  # Update this to the generated fat JAR file name
+      CodeUri: target/BlogInputLambda-1.0-SNAPSHOT-shaded.jar  # Update this to the generated fat JAR file name
