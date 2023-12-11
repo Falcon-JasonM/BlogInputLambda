@@ -3,10 +3,17 @@ Transform: AWS::Serverless-2016-10-31
 Description: Handler for blog post input
 
 Resources:
-  HelloWorldLambda:
+  MyLambdaFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: MyLambdaFunction
+      Handler: handlers.StoreDataLambda::handleRequest
       Runtime: java17
       MemorySize: 512
-      Handler: handlers.StoreDataLambda::handleRequest
-      CodeUri: target/BlogInputLambda-1.0-SNAPSHOT-shaded.jar  # Update this to the generated fat JAR file name
+      CodeUri: target/BlogInputLambda-1.0-SNAPSHOT-shaded.jar
+      Policies:
+        - SecretsManagerReadWritePolicy:
+            SecretName: prod/blogDB/dbUserPass
+        - RDSConnectPolicy:
+            DBInstanceIdentifier: blog-post-db
+            Region: us-east-2
