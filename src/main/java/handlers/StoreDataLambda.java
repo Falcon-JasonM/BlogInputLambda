@@ -6,10 +6,10 @@ import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
 import com.amazonaws.services.secretsmanager.model.GetSecretValueRequest;
 import com.amazonaws.services.secretsmanager.model.GetSecretValueResult;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,7 +35,8 @@ public class StoreDataLambda implements RequestStreamHandler {
             GetSecretValueRequest getSecretValueRequest = new GetSecretValueRequest()
                     .withSecretId(secretName);
 
-            GetSecretValueResult secretValueResult = secretsManager.getSecretValue(getSecretValueRequest);
+            GetSecretValueResult secretValueResult =
+                    secretsManager.getSecretValue(getSecretValueRequest);
 
             // Parse secret string to extract necessary values
             String secret = secretValueResult.getSecretString();
