@@ -27,16 +27,15 @@ public class StoreDataLambda implements RequestStreamHandler {
             JsonNode jsonInput = mapper.readTree(input);
 
             // Assuming JSON structure: { "field1": "value1", "field2": "value2", "field3": "value3" }
-            String field1 = jsonInput.get("field1").asText();
-            String field2 = jsonInput.get("field2").asText();
-            String field3 = jsonInput.get("field3").asText();
+            String field1 = jsonInput.get("title").asText();
+            String field2 = jsonInput.get("content").asText();
+            //String field3 = jsonInput.get("field3").asText();
 
             // Store data into PostgreSQL using prepared statement
-            String sql = "INSERT INTO your_table_name (field1, field2, field3) VALUES (?, ?, ?)";
+            String sql = "INSERT INTO blog_page.blog_post (title, content) VALUES (?, ?)";
             PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setString(1, field1);
-            statement.setString(2, field2);
-            statement.setString(3, field3);
+            statement.setString(1, title);
+            statement.setString(2, content);
             statement.executeUpdate();
 
             // Close resources
