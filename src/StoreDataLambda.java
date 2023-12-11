@@ -8,14 +8,14 @@ import java.sql.SQLException;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
+import com.amazonaws.services.secretsmanager.AWSSecretsManager;
+import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
+import com.amazonaws.services.secretsmanager.model.GetSecretValueRequest;
+import com.amazonaws.services.secretsmanager.model.GetSecretValueResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class StoreDataLambda implements RequestStreamHandler {
-
-    private static final String DB_URL = "jdbc:postgresql:blog-post-db.cb61nkakvvkt.us-east-2.rds.amazonaws.com";
-    private static final String DB_USERNAME = "postgres";
-    private static final String DB_PASSWORD = "dfFVbYII5xeBzgEQ94sd";
 
     @Override
     public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
@@ -23,13 +23,28 @@ public class StoreDataLambda implements RequestStreamHandler {
         Connection connection = null;
 
         try {
-            connection = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            AWSSecretsManager secretsManager = AWSSecretsManagerClientBuilder.defaultClient();
+            String secretName = "prod/blogDB/dbUserPass";
+            Region region = Region.of("us-east-2");
+            private static final String DB_URL = "jdbc:postgresql:blog-post-db.cb61nkakvvkt.us-east-2.rds.amazonaws.com";
+            GetSecretValueRequest getSecretValueRequest = new GetSecretValueRequest()
+                    .withSecretId(secretName);
+                    .withRegion(region.toString());
+            GetSecretValueResult secretValueResult = secretsManager.getSecretValue(getSecretValueRequest);
+
+            // Parse secret string to extract necessary values
+            String secret = secretValueResult.getSecretString();
+            JsonNode secretJson = mapper.readTree(secret);
+            String dbUrl = DB_URL;
+            String dbUsername = secretJson.get("username").asText();
+            String dbPassword = secretJson.get("password").asText();
+
+            connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
             JsonNode jsonInput = mapper.readTree(input);
 
-            // Assuming JSON structure: { "field1": "value1", "field2": "value2", "field3": "value3" }
-            String field1 = jsonInput.get("title").asText();
-            String field2 = jsonInput.get("content").asText();
-            //String field3 = jsonInput.get("field3").asText();
+            // Assuming JSON structure: { "title": "value1", "content": "value2" }
+            String title = jsonInput.get("title").asText();
+            String content = jsonInput.get("content").asText();
 
             // Store data into PostgreSQL using prepared statement
             String sql = "INSERT INTO blog_page.blog_post (title, content) VALUES (?, ?)";
