@@ -1,13 +1,5 @@
 package handlers;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
@@ -16,9 +8,20 @@ import com.amazonaws.services.secretsmanager.model.GetSecretValueRequest;
 import com.amazonaws.services.secretsmanager.model.GetSecretValueResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueResponse;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 public class StoreDataLambda implements RequestStreamHandler {
 
+    private static final String DB_URL = "jdbc:postgresql:blog-post-db.cb61nkakvvkt.us-east-2.rds.amazonaws.com";
     @Override
     public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
@@ -28,10 +31,10 @@ public class StoreDataLambda implements RequestStreamHandler {
             AWSSecretsManager secretsManager = AWSSecretsManagerClientBuilder.defaultClient();
             String secretName = "prod/blogDB/dbUserPass";
             Region region = Region.of("us-east-2");
-            private static final String DB_URL = "jdbc:postgresql:blog-post-db.cb61nkakvvkt.us-east-2.rds.amazonaws.com";
+
             GetSecretValueRequest getSecretValueRequest = new GetSecretValueRequest()
                     .withSecretId(secretName);
-                    .withRegion(region.toString());
+
             GetSecretValueResult secretValueResult = secretsManager.getSecretValue(getSecretValueRequest);
 
             // Parse secret string to extract necessary values

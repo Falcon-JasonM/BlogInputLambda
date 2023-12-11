@@ -21,11 +21,22 @@
 </properties>
 
 <dependencies>
+  <dependency>
+    <groupId>com.amazonaws</groupId>
+    <artifactId>aws-java-sdk-secretsmanager</artifactId>
+    <version>1.11.976</version> <!-- or the latest version available -->
+  </dependency>
   <!-- AWS Lambda Core Library -->
   <dependency>
     <groupId>com.amazonaws</groupId>
     <artifactId>aws-lambda-java-core</artifactId>
     <version>${aws.java.sdk.version}</version>
+  </dependency>
+  <!-- https://mvnrepository.com/artifact/software.amazon.awssdk/secretsmanager -->
+  <dependency>
+    <groupId>software.amazon.awssdk</groupId>
+    <artifactId>secretsmanager</artifactId>
+    <version>2.21.40</version>
   </dependency>
 
   <!-- Jackson for JSON processing -->
