@@ -10,4 +10,4 @@ Resources:
       Runtime: java17
       MemorySize: 512
       Handler: handlers.StoreDataLambda::handleRequest
-      CodeUri: target/lambda.zip
+      CodeUri: target/handler-for-blog-post-input.jar  # Update this to the generated fat JAR file name
