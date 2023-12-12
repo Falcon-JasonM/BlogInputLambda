@@ -2,14 +2,16 @@ package handlers;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
-import com.amazonaws.services.secretsmanager.AWSSecretsManager;
-import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
-import com.amazonaws.services.secretsmanager.model.GetSecretValueRequest;
-import com.amazonaws.services.secretsmanager.model.GetSecretValueResult;
+
+// Make sure to import the following packages in your code
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
+import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest;
+import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueResponse;
+
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import software.amazon.awssdk.regions.Region;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,25 +23,36 @@ import java.sql.SQLException;
 
 public class StoreDataLambda implements RequestStreamHandler {
 
-    private static final String DB_URL = "jdbc:postgresql:blog-post-db.cb61nkakvvkt.us-east-2.rds.amazonaws.com";
+    private static final String DB_URL = "jdbc:postgresql:blog-post-db.cb61nkakvvkt.us-east-2.rds.amazonaws.com:5432/postgres";
     @Override
     public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         Connection connection = null;
 
         try {
-            AWSSecretsManager secretsManager = AWSSecretsManagerClientBuilder.defaultClient();
             String secretName = "prod/blogDB/dbUserPass";
             Region region = Region.of("us-east-2");
 
-            GetSecretValueRequest getSecretValueRequest = new GetSecretValueRequest()
-                    .withSecretId(secretName);
+            // Create a Secrets Manager client
+            SecretsManagerClient client = SecretsManagerClient.builder()
+                    .region(region)
+                    .build();
 
-            GetSecretValueResult secretValueResult =
-                    secretsManager.getSecretValue(getSecretValueRequest);
+            GetSecretValueRequest getSecretValueRequest = GetSecretValueRequest.builder()
+                    .secretId(secretName)
+                    .build();
 
-            // Parse secret string to extract necessary values
-            String secret = secretValueResult.getSecretString();
+            GetSecretValueResponse getSecretValueResponse;
+
+            try {
+                getSecretValueResponse = client.getSecretValue(getSecretValueRequest);
+            } catch (Exception e) {
+                // For a list of exceptions thrown, see
+                // https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+                throw e;
+            }
+
+            String secret = getSecretValueResponse.secretString();
             JsonNode secretJson = mapper.readTree(secret);
             String dbUrl = DB_URL;
             String dbUsername = secretJson.get("username").asText();
