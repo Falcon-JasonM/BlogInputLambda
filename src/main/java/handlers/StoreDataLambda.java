@@ -20,9 +20,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.logging.Logger;
 
 public class StoreDataLambda implements RequestStreamHandler {
 
+    public static final Logger LOGGER = Logger.getLogger(StoreDataLambda.class.getName());
     private static final String DB_URL = "jdbc:postgresql:blog-post-db.cb61nkakvvkt.us-east-2.rds.amazonaws.com:5432/postgres";
     @Override
     public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
@@ -42,14 +44,15 @@ public class StoreDataLambda implements RequestStreamHandler {
                     .secretId(secretName)
                     .build();
 
-            GetSecretValueResponse getSecretValueResponse;
+            GetSecretValueResponse getSecretValueResponse = null;
 
             try {
                 getSecretValueResponse = client.getSecretValue(getSecretValueRequest);
             } catch (Exception e) {
                 // For a list of exceptions thrown, see
                 // https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-                throw e;
+                LOGGER.severe("Error occurred while retrieving secret value: " + e.getMessage());
+                e.printStackTrace();
             }
 
             String secret = getSecretValueResponse.secretString();
@@ -57,7 +60,7 @@ public class StoreDataLambda implements RequestStreamHandler {
             String dbUrl = DB_URL;
             String dbUsername = secretJson.get("username").asText();
             String dbPassword = secretJson.get("password").asText();
-
+            LOGGER.info("Attempting to connect to the DB...");
             connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
             JsonNode jsonInput = mapper.readTree(input);
 
@@ -77,13 +80,16 @@ public class StoreDataLambda implements RequestStreamHandler {
             connection.close();
         } catch (SQLException e) {
             // Handle database exceptions
+            LOGGER.severe("Error occurred while connecting to the database: " + e.getMessage());
             e.printStackTrace();
+
         } finally {
             try {
                 if (connection != null && !connection.isClosed()) {
                     connection.close();
                 }
             } catch (SQLException e) {
+                
                 e.printStackTrace();
             }
         }
