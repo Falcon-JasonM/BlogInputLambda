@@ -21,7 +21,6 @@
 </properties>
 
 <dependencies>
-
   <dependency>
     <groupId>org.slf4j</groupId>
     <artifactId>slf4j-api</artifactId>
@@ -53,6 +52,13 @@
     <artifactId>aws-lambda-java-core</artifactId>
     <version>${aws.java.sdk.version}</version>
   </dependency>
+  <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-lambda-java-events -->
+  <dependency>
+    <groupId>com.amazonaws</groupId>
+    <artifactId>aws-lambda-java-events</artifactId>
+    <version>3.11.4</version>
+  </dependency>
+
   <!-- https://mvnrepository.com/artifact/software.amazon.awssdk/secretsmanager -->
   <dependency>
     <groupId>software.amazon.awssdk</groupId>
@@ -83,8 +89,8 @@
       <artifactId>maven-compiler-plugin</artifactId>
       <version>3.8.1</version>
       <configuration>
-        <source>${maven.compiler.source}</source>
-        <target>${maven.compiler.target}</target>
+        <source>11</source>
+        <target>11</target>
       </configuration>
     </plugin>
 

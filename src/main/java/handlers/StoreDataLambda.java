@@ -10,7 +10,6 @@ import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest;
 import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueResponse;
 
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -24,7 +23,7 @@ import java.sql.SQLException;
 
 
 public class StoreDataLambda implements RequestStreamHandler {
-    private static final String database_url = "jdbc:postgresql://blog-post-db.cb61nkakvvkt.us-east-2.rds.amazonaws.com:5432/postgres";
+    private static final String database_url = System.getenv("DB_URL_KEY");
     @Override
     public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
@@ -32,7 +31,7 @@ public class StoreDataLambda implements RequestStreamHandler {
         LambdaLogger LOGGER = context.getLogger();
 
         try {
-            String secretName = "prod/blogDB/dbUserPass";
+            String secretName = System.getenv("SECRET_NAME");
             Region region = Region.of("us-east-2");
 
             // Create a Secrets Manager client
