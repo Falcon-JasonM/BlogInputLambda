@@ -1,9 +1,10 @@
 package handlers;
 
 import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
+import com.amazonaws.services.lambda.runtime.logging.LogLevel;
 
-// Make sure to import the following packages in your code
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest;
@@ -20,16 +21,14 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.logging.Logger;
 
 public class StoreDataLambda implements RequestStreamHandler {
-
-    public static final Logger LOGGER = Logger.getLogger(StoreDataLambda.class.getName());
     private static final String DB_URL = "jdbc:postgresql:blog-post-db.cb61nkakvvkt.us-east-2.rds.amazonaws.com:5432/postgres";
     @Override
     public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         Connection connection = null;
+        LambdaLogger LOGGER = context.getLogger();
 
         try {
             String secretName = "prod/blogDB/dbUserPass";
@@ -45,23 +44,22 @@ public class StoreDataLambda implements RequestStreamHandler {
                     .build();
 
             GetSecretValueResponse getSecretValueResponse = null;
-
+            LOGGER.log("getting dB creds", LogLevel.DEBUG);
             try {
                 getSecretValueResponse = client.getSecretValue(getSecretValueRequest);
             } catch (Exception e) {
                 // For a list of exceptions thrown, see
                 // https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-                LOGGER.severe("Error occurred while retrieving secret value: " + e.getMessage());
+                LOGGER.log("ERROR" + e.getMessage(), LogLevel.ERROR);
                 e.printStackTrace();
             }
 
             String secret = getSecretValueResponse.secretString();
             JsonNode secretJson = mapper.readTree(secret);
-            String dbUrl = DB_URL;
             String dbUsername = secretJson.get("username").asText();
             String dbPassword = secretJson.get("password").asText();
-            LOGGER.info("Attempting to connect to the DB...");
-            connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
+            LOGGER.log("Attempting to connect to the DB...", LogLevel.INFO);
+            connection = DriverManager.getConnection(DB_URL, dbUsername, dbPassword);
             JsonNode jsonInput = mapper.readTree(input);
 
             // Assuming JSON structure: { "title": "value1", "content": "value2" }
@@ -80,7 +78,7 @@ public class StoreDataLambda implements RequestStreamHandler {
             connection.close();
         } catch (SQLException e) {
             // Handle database exceptions
-            LOGGER.severe("Error occurred while connecting to the database: " + e.getMessage());
+            LOGGER.log("Error occurred while connecting to the database: " + e.getMessage(), LogLevel.ERROR);
             e.printStackTrace();
 
         } finally {
@@ -89,7 +87,7 @@ public class StoreDataLambda implements RequestStreamHandler {
                     connection.close();
                 }
             } catch (SQLException e) {
-                
+                LOGGER.log("Error occurred while closing the connection: " + e.getMessage(), LogLevel.ERROR);
                 e.printStackTrace();
             }
         }
