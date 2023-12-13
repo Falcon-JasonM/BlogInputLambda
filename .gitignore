@@ -5,6 +5,7 @@ target/
 
 bash-scripts.txt
 template.yml
+samconfig.toml
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

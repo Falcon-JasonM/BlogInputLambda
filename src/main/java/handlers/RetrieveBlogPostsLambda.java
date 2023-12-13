@@ -45,7 +45,7 @@ public class RetrieveBlogPostsLambda implements RequestStreamHandler {
         APIGatewayProxyRequestEvent requestEvent = new ObjectMapper().readValue(input, APIGatewayProxyRequestEvent.class);
 
         if ("GET".equals(requestEvent.getHttpMethod())) {
-
+            
             try {
                 LOGGER.log("Getting DB credentials...\n");
 
