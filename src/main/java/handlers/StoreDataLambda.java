@@ -22,8 +22,9 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+
 public class StoreDataLambda implements RequestStreamHandler {
-    private static final String DB_URL = "jdbc:postgresql:blog-post-db.cb61nkakvvkt.us-east-2.rds.amazonaws.com:5432/postgres";
+    private static final String database_url = "jdbc:postgresql://blog-post-db.cb61nkakvvkt.us-east-2.rds.amazonaws.com:5432/postgres";
     @Override
     public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
@@ -44,7 +45,7 @@ public class StoreDataLambda implements RequestStreamHandler {
                     .build();
 
             GetSecretValueResponse getSecretValueResponse = null;
-            LOGGER.log("getting dB creds", LogLevel.DEBUG);
+            LOGGER.log("Getting DB credentials\n", LogLevel.DEBUG);
             try {
                 getSecretValueResponse = client.getSecretValue(getSecretValueRequest);
             } catch (Exception e) {
@@ -58,8 +59,8 @@ public class StoreDataLambda implements RequestStreamHandler {
             JsonNode secretJson = mapper.readTree(secret);
             String dbUsername = secretJson.get("username").asText();
             String dbPassword = secretJson.get("password").asText();
-            LOGGER.log("Attempting to connect to the DB...", LogLevel.INFO);
-            connection = DriverManager.getConnection(DB_URL, dbUsername, dbPassword);
+            LOGGER.log("Attempting to connect to the DB...\n", LogLevel.INFO);
+            connection = DriverManager.getConnection(database_url, dbUsername, dbPassword);
             JsonNode jsonInput = mapper.readTree(input);
 
             // Assuming JSON structure: { "title": "value1", "content": "value2" }
@@ -78,7 +79,7 @@ public class StoreDataLambda implements RequestStreamHandler {
             connection.close();
         } catch (SQLException e) {
             // Handle database exceptions
-            LOGGER.log("Error occurred while connecting to the database: " + e.getMessage(), LogLevel.ERROR);
+            LOGGER.log("Error occurred while connecting to the database: \n" + e.getMessage(), LogLevel.ERROR);
             e.printStackTrace();
 
         } finally {
@@ -87,7 +88,7 @@ public class StoreDataLambda implements RequestStreamHandler {
                     connection.close();
                 }
             } catch (SQLException e) {
-                LOGGER.log("Error occurred while closing the connection: " + e.getMessage(), LogLevel.ERROR);
+                LOGGER.log("Error occurred while closing the connection: \n" + e.getMessage(), LogLevel.ERROR);
                 e.printStackTrace();
             }
         }
