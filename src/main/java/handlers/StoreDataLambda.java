@@ -59,6 +59,7 @@ public class StoreDataLambda implements RequestStreamHandler {
             JsonNode secretJson = mapper.readTree(secret);
             String dbUsername = secretJson.get("username").asText();
             String dbPassword = secretJson.get("password").asText();
+            LOGGER.log("Got DB credentials\n", LogLevel.DEBUG);
             LOGGER.log("Attempting to connect to the DB...\n", LogLevel.INFO);
             connection = DriverManager.getConnection(database_url, dbUsername, dbPassword);
             JsonNode jsonInput = mapper.readTree(input);
