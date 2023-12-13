@@ -24,7 +24,7 @@ import java.sql.SQLException;
 
 
 public class StoreDataLambda implements RequestStreamHandler {
-    private static final String database_url = "jdbc:postgresql://blog-post-db.cb61nkakvvkt.us-east-2.rds.amazonaws.com:5432/postgres";
+    private static final String database_url = "jdbc:postgresql://<private-aws-url-string>.us-east-2.rds.amazonaws.com:5432/postgres";
     @Override
     public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
