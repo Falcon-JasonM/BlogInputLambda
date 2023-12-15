@@ -21,9 +21,9 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-
 public class StoreDataLambda implements RequestStreamHandler {
-    private static final String database_url = System.getenv("DB_URL_KEY");
+    private static final String DATABASE_URL = System.getenv("DB_URL_KEY");
+
     @Override
     public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
@@ -34,7 +34,6 @@ public class StoreDataLambda implements RequestStreamHandler {
             String secretName = System.getenv("SECRET_NAME");
             Region region = Region.of("us-east-2");
 
-            // Create a Secrets Manager client
             SecretsManagerClient client = SecretsManagerClient.builder()
                     .region(region)
                     .build();
@@ -43,24 +42,15 @@ public class StoreDataLambda implements RequestStreamHandler {
                     .secretId(secretName)
                     .build();
 
-            GetSecretValueResponse getSecretValueResponse = null;
-            LOGGER.log("Getting DB credentials\n", LogLevel.DEBUG);
-            try {
-                getSecretValueResponse = client.getSecretValue(getSecretValueRequest);
-            } catch (Exception e) {
-                // For a list of exceptions thrown, see
-                // https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-                LOGGER.log("ERROR" + e.getMessage(), LogLevel.ERROR);
-                e.printStackTrace();
-            }
-
+            GetSecretValueResponse getSecretValueResponse = client.getSecretValue(getSecretValueRequest);
             String secret = getSecretValueResponse.secretString();
             JsonNode secretJson = mapper.readTree(secret);
             String dbUsername = secretJson.get("username").asText();
             String dbPassword = secretJson.get("password").asText();
-            LOGGER.log("Got DB credentials\n", LogLevel.DEBUG);
+
             LOGGER.log("Attempting to connect to the DB...\n", LogLevel.INFO);
-            connection = DriverManager.getConnection(database_url, dbUsername, dbPassword);
+            connection = DriverManager.getConnection(DATABASE_URL, dbUsername, dbPassword);
+
             JsonNode jsonInput = mapper.readTree(input);
 
             // Assuming JSON structure: { "title": "value1", "content": "value2" }
@@ -76,12 +66,9 @@ public class StoreDataLambda implements RequestStreamHandler {
 
             // Close resources
             statement.close();
-            connection.close();
         } catch (SQLException e) {
-            // Handle database exceptions
             LOGGER.log("Error occurred while connecting to the database: \n" + e.getMessage(), LogLevel.ERROR);
             e.printStackTrace();
-
         } finally {
             try {
                 if (connection != null && !connection.isClosed()) {
