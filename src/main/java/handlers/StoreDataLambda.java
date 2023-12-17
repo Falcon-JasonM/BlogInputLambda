@@ -32,11 +32,12 @@ public class StoreDataLambda implements RequestStreamHandler {
         Connection connection = null;
         LambdaLogger LOGGER = context.getLogger();
         JSONParser parser = new JSONParser();
-        JSONObject responseJson = new JSONObject();
 
         try {
+            // Parse input to JSON
             JSONObject event = (JSONObject) parser.parse(new InputStreamReader(input));
 
+            // Check to make sure the body was sent
             if (event.get("body") != null ) {
                 JSONObject body = (JSONObject) parser.parse(event.get("body").toString());
 
@@ -73,9 +74,10 @@ public class StoreDataLambda implements RequestStreamHandler {
                 statement.close();
 
                 APIGatewayProxyResponseEvent responseEvent = new APIGatewayProxyResponseEvent();
-                String responseBody = "Blog post successfully added";
+                String responseBody = "{\"message\": \"Blog post successfully added\"}";
                 responseEvent.setStatusCode(200);
                 responseEvent.setBody(responseBody);
+                responseEvent.setIsBase64Encoded(false);
 
                 try (OutputStreamWriter writer = new OutputStreamWriter(output, "UTF-8")) {
                     writer.write(mapper.writeValueAsString(responseEvent));
