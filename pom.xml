@@ -22,6 +22,13 @@
 
 <dependencies>
   <dependency>
+    <groupId>com.googlecode.json-simple</groupId>
+    <artifactId>json-simple</artifactId>
+    <version>1.1.1</version>
+  </dependency>
+
+
+  <dependency>
     <groupId>org.slf4j</groupId>
     <artifactId>slf4j-api</artifactId>
     <version>2.0.9</version> <!-- Replace with the latest version -->
