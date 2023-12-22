@@ -3,12 +3,10 @@ package handlers;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
 import com.amazonaws.services.lambda.runtime.logging.LogLevel;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest;
@@ -22,8 +20,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class StoreDataLambda implements RequestStreamHandler {
+
     private static final String DATABASE_URL = System.getenv("DB_URL_KEY");
 
     @Override
@@ -31,20 +32,39 @@ public class StoreDataLambda implements RequestStreamHandler {
         ObjectMapper mapper = new ObjectMapper();
         Connection connection = null;
         LambdaLogger LOGGER = context.getLogger();
-        JSONParser parser = new JSONParser();
+        APIGatewayV2HTTPResponse responseEvent = new APIGatewayV2HTTPResponse();
+        APIGatewayV2HTTPEvent requestEvent;
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "application/json");
+        headers.put("Access-Control-Allow-Origin", "*");
+        headers.put("Access-Control-Allow-Methods", "GET, OPTIONS");
+        headers.put("Access-Control-Allow-Headers", "Content-Type");
 
         try {
-            // Parse input to JSON
-            JSONObject event = (JSONObject) parser.parse(new InputStreamReader(input));
+           requestEvent = mapper.readValue(input, APIGatewayV2HTTPEvent.class);
 
-            // Check to make sure the body was sent
-            if (event.get("body") != null ) {
-                JSONObject body = (JSONObject) parser.parse(event.get("body").toString());
+            // Return http status = 200 OK if request method is OPTIONS
+            if (requestEvent.getHeaders() != null && requestEvent.getHeaders().containsKey("httpMethod") &&
+                    "OPTIONS".equals(requestEvent.getHeaders().get("httpMethod"))) {
+                responseEvent.setStatusCode(200);
+                responseEvent.setHeaders(headers);
+                responseEvent.setIsBase64Encoded(false);
+                try {
+                    mapper.writeValue(output, responseEvent);
+                } catch (IOException ex) {
+                    LOGGER.log("Error processing pre-flight options request: " + ex.getMessage(), LogLevel.ERROR);
+                    throw new RuntimeException(ex);
+                }
+                return;
+            }
 
-                LOGGER.log("Body: " + body.toJSONString(), LogLevel.INFO);
+            if (requestEvent.getBody() != null) {
+                JsonNode body = mapper.readTree(requestEvent.getBody());
 
-                String title = body.get("title").toString();
-                String content = body.get("content").toString();
+                LOGGER.log("Body: " + body.toString(), LogLevel.INFO);
+
+                String title = body.get("title").asText();
+                String content = body.get("content").asText();
 
                 String secretName = System.getenv("SECRET_NAME");
                 Region region = Region.of("us-east-2");
@@ -73,22 +93,20 @@ public class StoreDataLambda implements RequestStreamHandler {
                 statement.executeUpdate();
                 statement.close();
 
-                APIGatewayProxyResponseEvent responseEvent = new APIGatewayProxyResponseEvent();
+                responseEvent = new APIGatewayV2HTTPResponse();
                 String responseBody = "{\"message\": \"Blog post successfully added\"}";
                 responseEvent.setStatusCode(200);
                 responseEvent.setBody(responseBody);
                 responseEvent.setIsBase64Encoded(false);
 
-                try (OutputStreamWriter writer = new OutputStreamWriter(output, "UTF-8")) {
-                    writer.write(mapper.writeValueAsString(responseEvent));
-                }
+                mapper.writeValue(output,responseEvent);
             } else {
                 LOGGER.log("Request body is empty or missing", LogLevel.ERROR);
             }
         } catch (SQLException e) {
             LOGGER.log("Error occurred while connecting to the database: \n" + e.getMessage(), LogLevel.ERROR);
             e.printStackTrace();
-        } catch (ParseException | IOException e) {
+        } catch (IOException e) {
             LOGGER.log("Error occurred while parsing the request body: \n" + e.getMessage(), LogLevel.ERROR);
             throw new RuntimeException(e);
         } finally {
